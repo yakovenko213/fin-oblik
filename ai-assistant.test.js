@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const html=fs.readFileSync('index.html','utf8'),css=fs.readFileSync('styles.css','utf8'),js=fs.readFileSync('app.js','utf8');
+assert.match(html,/id="aiLauncher"/,'є кнопка запуску ШІ помічника');
+assert.match(html,/id="aiChat"[^>]*role="dialog"/,'чат має доступну роль dialog');
+assert.match(html,/id="aiChatForm"/,'є форма надсилання повідомлення');
+assert.match(css,/@media\(max-width:35rem\)[\s\S]*\.ai-chat\{position:fixed;inset:0/,'на телефоні чат повноекранний');
+assert.match(js,/function getAiAnswer/,'реалізовані відповіді помічника');
+assert.match(js,/getActiveTransactions\(\)/,'відповіді використовують актуальні дані');
+assert.match(js,/e\.key==='Enter'&&!e\.shiftKey/,'Enter надсилає повідомлення');
+assert.match(html,/id="aiApiKey"[^>]*type="password"/,'є захищене поле OpenAI API-ключа');
+assert.match(js,/https:\/\/api\.openai\.com\/v1\/responses/,'чат викликає OpenAI Responses API');
+assert.match(js,/localStorage\.setItem\(AI_KEY/,'API-ключ зберігається постійно на пристрої');
+assert.doesNotMatch(js,/financeStore\.save\([^)]*AI_KEY/,'API-ключ не потрапляє у відкритий Firebase-стан');
+assert.match(js,/loadAiSourceContext/,'ШІ отримує вихідний код системи');
+assert.match(js,/aiStateContext/,'ШІ отримує актуальний стан системи');
+assert.match(js,/function renderAiText/,'Markdown-відповіді відображаються як форматований текст');
+assert.match(js,/replace\(\/&\/g,'&amp;'\)/,'HTML у відповідях безпечно екранується');
+console.log('ai-assistant: 15 перевірок пройдено');

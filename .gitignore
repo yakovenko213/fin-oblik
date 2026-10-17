@@ -1,0 +1,8 @@
+node_modules/
+.firebase/
+*-debug.log
+firepit-log.txt
+.env
+.env.*
+*.local
+node_modules

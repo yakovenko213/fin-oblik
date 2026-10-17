@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const html=fs.readFileSync('index.html','utf8'),js=fs.readFileSync('app.js','utf8');
+assert.match(html,/id="periodsNav"[^>]*>.*Закриття періоду/s,'1: пункт меню');
+assert.match(html,/id="periodsView"/,'2: окремий екран');
+assert.match(js,/function renderPeriodCurrentState/,'3: картка стану');
+assert.match(js,/button\.disabled=!canClose/,'4: блокування кнопки');
+assert.match(js,/const PERIOD_HELP=/,'5: централізовані підказки');
+assert.match(js,/tooltipPortal/,'6: підказки підтримують портал і тап');
+assert.match(js,/canReopen=p===latest&&p\.status==='closed'/,'7: лише останній період відкривається');
+assert.match(js,/localStorage\.setItem\(key,String\(element\.open\)\)/,'8: стан довідок збережено');
+assert.match(js,/openPeriodWizard/,'9: майстер підключено');
+assert.match(js,/snapshotIntegrity\(p\)/,'10: перевірка знімків збережена');
+console.log('period-interface: 10 перевірок пройдено');

@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "accounting": {
+      "fin-oblik-state": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}

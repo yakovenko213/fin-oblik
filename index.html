@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finbase — Управлінський облік</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section class="login-screen" id="loginScreen" hidden aria-label="Авторизація">
+    <div class="login-card">
+      <div class="login-brand"><span class="brand-mark">F</span><span>finbase</span></div>
+      <div class="login-intro"><h1>Вітаємо знову</h1><p>Увійдіть, щоб продовжити роботу з фінансами</p></div>
+      <form id="loginForm" class="login-form">
+        <label><span>Логін</span><input id="loginName" type="text" autocomplete="username" placeholder="Введіть логін" required></label>
+        <label><span>Пароль</span><div class="password-control"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Введіть пароль" required><button id="togglePassword" type="button" aria-label="Показати пароль">◉</button></div></label>
+        <p class="login-error" id="loginError" hidden>Неправильний логін або пароль.</p>
+        <button class="login-submit" type="submit">Увійти до системи <span>→</span></button>
+      </form>
+      <p class="login-note">Для безпеки авторизація потрібна раз на 7 днів</p>
+    </div>
+  </section>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Finbase">
+      <span class="brand-mark">F</span>
+      <span>finbase</span>
+    </a>
+    <nav class="main-nav" aria-label="Головна навігація">
+      <a class="active" href="#" id="transactionsNav">Транзакції</a>
+      <a href="#" id="accountsNav">Рахунки</a>
+      <a href="#" id="reportsNav">Звіти</a>
+      <a href="#" id="statisticsNav">Статистика</a>
+      <a href="#" id="periodsNav"><svg aria-hidden="true"><use href="#i-lock"/></svg>Закриття періоду</a>
+      <a href="#" id="journalNav">Журнал</a>
+    </nav>
+    <div class="top-actions">
+      <div class="cloud-status" id="cloudStatus" title="Статус збереження у базі даних Firebase"><span class="cloud-dot"></span><span class="cloud-text">Підключення...</span></div>
+      <button class="icon-btn" aria-label="Пошук"><svg><use href="#i-search"/></svg></button>
+      <button class="icon-btn notification" aria-label="Сповіщення"><svg><use href="#i-bell"/></svg></button>
+      <button class="profile" id="logoutButton" title="Вийти з облікового запису"><span class="avatar">••</span><span class="profile-copy"><b>Мій профіль</b><small>Власник</small></span><svg><use href="#i-chevron"/></svg></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-head transaction-view">
+      <div>
+        <div class="eyebrow"><span>Фінанси</span><b>/</b><strong>Транзакції</strong></div>
+        <h1>Управлінський облік</h1>
+        <p>Контролюйте рух коштів та фінансовий результат компанії</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn secondary" id="importButton"><svg><use href="#i-upload"/></svg>Імпортувати</button><input id="importFile" type="file" accept=".csv,text/csv" hidden>
+        <button class="btn secondary" id="addFunds">Внести кошти в касу</button>
+        <button class="btn primary" id="addTransaction"><svg><use href="#i-plus"/></svg>Додати транзакцію</button>
+      </div>
+    </section>
+
+    <section class="summary-grid transaction-view" aria-label="Фінансові показники">
+      <article class="summary-card">
+        <div class="card-label"><span class="metric-icon neutral"><svg><use href="#i-wallet"/></svg></span><span>Залишок коштів</span><button class="more">•••</button></div>
+        <div class="metric" id="balanceMetric">₴ 0,00</div>
+        <div class="trend"><span id="balanceCaption">Транзакцій ще немає</span></div>
+      </article>
+      <article class="summary-card">
+        <div class="card-label"><span class="metric-icon income"><svg><use href="#i-arrow-down"/></svg></span><span>Доходи</span><button class="more">•••</button></div>
+        <div class="metric" id="incomeMetric">₴ 0,00</div>
+        <div class="trend"><span>За поточний період</span></div>
+      </article>
+      <article class="summary-card">
+        <div class="card-label"><span class="metric-icon expense"><svg><use href="#i-arrow-up"/></svg></span><span>Витрати</span><button class="more">•••</button></div>
+        <div class="metric" id="expenseMetric">₴ 0,00</div>
+        <div class="trend"><span>За поточний період</span></div>
+      </article>
+      <article class="summary-card profit-card">
+        <div class="card-label"><span class="metric-icon profit"><svg><use href="#i-chart"/></svg></span><span>Чистий прибуток</span><button class="more">•••</button></div>
+        <div class="metric" id="profitMetric">₴ 0,00</div>
+        <div class="trend"><span>За поточний період</span></div>
+      </article>
+    </section>
+    <section class="migration-panel transaction-view" id="migrationPanel" hidden></section>
+
+    <section class="sheet-card transaction-view">
+      <div class="sheet-tabs">
+        <div class="tabs">
+          <button class="tab active" data-filter="all">Усі транзакції <span id="allCount">0</span></button>
+          <button class="tab" data-filter="income">Доходи <span id="incomeCount">0</span></button>
+          <button class="tab" data-filter="expense">Витрати <span id="expenseCount">0</span></button>
+        </div>
+        <div class="view-tools">
+          <button class="icon-btn active"><svg><use href="#i-table"/></svg></button>
+          <button class="icon-btn"><svg><use href="#i-chart"/></svg></button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <label class="search-box"><svg><use href="#i-search"/></svg><input id="searchInput" type="search" placeholder="Пошук транзакцій..."></label>
+        <button class="filter-btn" id="periodButton"><svg><use href="#i-calendar"/></svg><span id="periodLabel">Оберіть період</span><svg class="small"><use href="#i-chevron"/></svg></button>
+        <button class="filter-btn" id="clearFilters"><svg><use href="#i-filter"/></svg>Очистити фільтри</button>
+        <button class="filter-btn right"><svg><use href="#i-columns"/></svg>Колонки</button>
+        <button class="filter-btn" id="exportButton"><svg><use href="#i-download"/></svg>Експорт</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th class="check"><input type="checkbox" id="selectAll"></th><th>Дата <span>↕</span></th><th>Опис</th><th>Категорія</th><th>Контрагент</th><th>Рахунок</th><th class="amount-head">Сума, ₴ <span>↕</span></th><th class="status-head">Статус</th><th></th></tr>
+          </thead>
+          <tbody id="transactionRows"></tbody>
+          <tfoot>
+            <tr><td></td><td colspan="5"><b>Разом за період</b><span class="footer-note" id="footerCount">0 транзакцій</span></td><td class="totals"><b class="total-income" id="footerIncome">+0,00</b><b class="total-expense" id="footerExpense">−0,00</b></td><td colspan="2"><div class="balance-total"><span>Результат</span><b id="footerResult">0,00</b></div></td></tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="pagination">
+        <span>Показано <b id="shownCount">0</b> з <b id="totalCount">0</b></span>
+        <div class="page-buttons"><button disabled><svg><use href="#i-left"/></svg></button><button class="current">1</button><button disabled><svg><use href="#i-right"/></svg></button></div>
+        <label>Рядків на сторінці:<select><option>8</option><option>16</option><option>32</option></select></label>
+      </div>
+    </section>
+
+    <section class="accounts-view" id="accountsView" hidden>
+      <div class="page-head accounts-heading">
+        <div><div class="eyebrow"><span>Фінанси</span><b>/</b><strong>Рахунки</strong></div><h1>Баланси рахунків</h1><p>Актуальні залишки з урахуванням усіх проведених транзакцій</p></div>
+      </div>
+      <div class="accounts-summary" id="accountCards"></div>
+      <div class="summary-grid reserve-summary" id="reserveSummary"></div>
+      <section class="sheet-card reserve-history-card"><div class="accounts-table-head"><div><h2>Резервний фонд</h2><p>Надходження з розподілів і видачі коштів</p></div><button class="btn primary" id="openReservePayout">Виплатити з резерву</button></div><div id="reserveHistory"></div></section>
+      <section class="sheet-card accounts-sheet">
+        <div class="accounts-table-head"><div><h2>Рух коштів за рахунками</h2><p>Надходження, витрати та поточний залишок</p></div><span id="accountsUpdated"></span></div>
+        <div class="table-wrap"><table class="accounts-table"><thead><tr><th>Рахунок</th><th>Кількість операцій</th><th class="amount-head">Надходження, ₴</th><th class="amount-head">Витрати, ₴</th><th class="amount-head">Поточний баланс, ₴</th></tr></thead><tbody id="accountsRows"></tbody><tfoot><tr><td><b>Усього</b></td><td id="accountsTotalOperations">0</td><td class="amount total-income" id="accountsTotalIncome">+0,00</td><td class="amount total-expense" id="accountsTotalExpense">−0,00</td><td class="amount" id="accountsTotalBalance">0,00</td></tr></tfoot></table></div>
+      </section>
+    </section>
+    <section class="reports-view" id="reportsView" hidden>
+      <div class="page-head accounts-heading"><div><div class="eyebrow"><span>Фінанси</span><b>/</b><strong>Звіти</strong></div><h1>Виплати власникам</h1><p>Фінансова діяльність за обраний період</p></div><div class="head-actions"><button class="btn secondary" id="reportPeriodButton"><svg><use href="#i-calendar"/></svg><span id="reportPeriodLabel">Увесь період</span></button><button class="btn secondary" id="closePeriodButton">Закрити період</button></div></div>
+      <div class="summary-grid report-metrics"><article class="summary-card"><div class="card-label">Накопичений прибуток</div><div class="metric" id="reportProfit">₴ 0,00</div></article><article class="summary-card"><div class="card-label">Виплати власникам</div><div class="metric" id="reportPayouts">₴ 0,00</div></article><article class="summary-card profit-card"><div class="card-label">Нерозподілений прибуток</div><div class="metric" id="reportRetained">₴ 0,00</div></article></div>
+      <div class="partner-payout-cards" id="partnerPayoutCards"></div>
+      <section class="sheet-card distribution-module"><div class="accounts-table-head"><div><h2>Розподіл прибутку</h2><p>Нарахування партнерам, борг компанії та фактичні виплати</p></div><button class="btn primary" id="openDistributionWizard">Розподілити прибуток</button></div><div class="distribution-availability" id="distributionAvailability"></div><div class="table-wrap"><table class="accounts-table capital-table"><thead><tr><th>Партнер</th><th class="amount-head">Капітал, ₴</th><th class="amount-head">Позика / повернено / борг, ₴</th><th class="amount-head">Виплати, ₴</th><th>Частка, %</th><th class="amount-head">Нараховано / не виплачено, ₴</th></tr></thead><tbody id="partnerCapitalRows"></tbody></table></div></section>
+      <section class="sheet-card distribution-settings-card"><div class="accounts-table-head"><div><h2>Налаштування розподілу</h2><p>Періодичність, резерв, мінімальна виплата та винагорода за роботу</p></div></div><form id="distributionSettingsForm" class="distribution-settings"></form></section>
+      <section class="sheet-card distribution-history-card"><div class="accounts-table-head"><div><h2>Історія розподілів</h2><p>Чернетки та затверджені нарахування партнерам</p></div></div><div id="distributionHistory"></div></section>
+      <section class="sheet-card"><div class="accounts-table-head"><div><h2>Виплати за власниками</h2><p>Виплати показані окремо від операційних витрат</p></div></div><div class="table-wrap"><table class="accounts-table"><thead><tr><th>Власник</th><th>Кількість виплат</th><th class="amount-head">Сума виплат, ₴</th></tr></thead><tbody id="ownerPayoutRows"></tbody><tfoot><tr><td><b>Усього</b></td><td id="ownerPayoutCount">0</td><td class="amount total-expense" id="ownerPayoutTotal">−0,00</td></tr></tfoot></table></div></section>
+    </section>
+    <section class="statistics-view" id="statisticsView" hidden>
+      <div class="page-head accounts-heading">
+        <div><div class="eyebrow"><span>Фінанси</span><b>/</b><strong>Статистика</strong></div><h1>Рух коштів за статтями</h1><p>Надходження, витрати та списання за вибраний період</p></div>
+      </div>
+      <section class="sheet-card statistics-card">
+        <div class="statistics-toolbar">
+          <div class="period-switch" role="group" aria-label="Період статистики">
+            <button data-stats-period="day">День</button><button data-stats-period="week">Тиждень</button><button class="active" data-stats-period="month">Місяць</button><button data-stats-period="all">Увесь час</button><button data-stats-period="custom">Обраний період</button>
+          </div>
+          <span class="statistics-period-label" id="statisticsPeriodLabel">Поточний місяць</span>
+        </div>
+        <div class="statistics-summary" id="statisticsSummary"></div>
+        <div class="table-wrap"><table class="statistics-table"><thead><tr><th>Стаття</th><th>Кількість операцій</th><th class="amount-head">Надходження, ₴</th><th class="amount-head">Витрати, ₴</th><th class="amount-head">Списання, ₴</th><th class="amount-head">Чистий рух, ₴</th></tr></thead><tbody id="statisticsRows"></tbody><tfoot><tr><td><b>Разом</b></td><td id="statisticsCount">0</td><td class="amount total-income" id="statisticsIncome">+0,00</td><td class="amount total-expense" id="statisticsExpense">−0,00</td><td class="amount total-expense" id="statisticsWriteoff">−0,00</td><td class="amount" id="statisticsNet">0,00</td></tr></tfoot></table></div>
+      </section>
+    </section>
+    <section class="periods-view" id="periodsView" hidden>
+      <div class="page-head accounts-heading"><div><div class="eyebrow"><span>Фінанси</span><b>/</b><strong>Закриття періоду</strong></div><h1>Закриття періоду</h1><p>Зафіксуйте підсумки завершеного місяця та захистіть їх від подальших змін</p></div></div>
+      <details class="sheet-card period-guide" id="periodIntro" open><summary>Що таке закриття періоду</summary><p>Закриття періоду фіксує цифри за обраний проміжок часу (зазвичай місяць). Після закриття операції цього періоду не можна створювати, змінювати, скасовувати чи видаляти, тож звіти за нього більше не зміняться. Помилки, знайдені пізніше, виправляються новою операцією в поточному періоді.</p></details>
+      <section class="sheet-card period-state-card"><div class="accounts-table-head"><div><h2>Поточний стан</h2><p>Готовність обліку до наступного закриття</p></div><button class="btn primary" id="startPeriodClose">Закрити період</button></div><div class="period-state-grid" id="periodCurrentState"></div><p class="period-recommendation" id="periodRecommendation"></p></section>
+      <section class="sheet-card"><div class="accounts-table-head"><div><h2>Закриті періоди</h2><p>Знімки, контроль цілісності та повторне відкриття</p></div></div><div id="closedPeriodRows"></div></section>
+      <details class="sheet-card period-guide" id="periodStepsGuide" open><summary>Як закрити період: крок за кроком</summary><ol><li><b>Вибір періоду.</b> Вкажіть останню дату; початок система визначить автоматично.</li><li><b>Перевірки.</b> Усуньте помилки залишків і переказів, що блокують продовження.</li><li><b>Звірка залишків.</b> Порівняйте облік із банківськими виписками для кожного рахунку.</li><li><b>Підсумок.</b> Перевірте показники знімка та підтвердьте закриття.</li></ol></details>
+    </section>
+    <section class="journal-view" id="journalView" hidden>
+      <div class="page-head accounts-heading"><div><div class="eyebrow"><span>Система</span><b>/</b><strong>Журнал</strong></div><h1>Журнал змін</h1><p>Історія операцій, міграцій і закриття періодів</p></div><div class="head-actions"><button class="btn secondary" id="backupExport">Експорт повного бекапу (JSON)</button><label class="btn secondary">Імпорт бекапу<input id="backupImport" type="file" accept="application/json,.json" hidden></label></div></div>
+      <section class="sheet-card journal-card"><div class="toolbar"><label class="search-box"><svg><use href="#i-search"/></svg><input id="journalSearch" type="search" placeholder="Пошук у журналі..."></label></div><div class="table-wrap"><table class="journal-table"><thead><tr><th>Дата</th><th>Користувач</th><th>Дія</th><th>Деталі</th></tr></thead><tbody id="journalRows"></tbody></table></div><nav class="journal-pagination" id="journalPagination" aria-label="Сторінки журналу"></nav></section>
+    </section>
+  </main>
+
+  <aside class="ai-assistant" id="aiAssistant" aria-label="ШІ помічник">
+    <section class="ai-chat" id="aiChat" role="dialog" aria-modal="false" aria-labelledby="aiChatTitle" aria-hidden="true">
+      <header class="ai-chat-head">
+        <span class="ai-avatar" aria-hidden="true">AI</span>
+        <div><h2 id="aiChatTitle">ШІ помічник</h2><p><span class="ai-online"></span> <span id="aiConnectionStatus">Потрібен API-ключ</span></p></div>
+        <button class="ai-settings-toggle" id="aiSettingsToggle" type="button" aria-label="Налаштувати API-ключ" title="Налаштування ШІ">⚙</button>
+        <button class="ai-close" id="aiChatClose" type="button" aria-label="Закрити чат"><svg><use href="#i-x"/></svg></button>
+      </header>
+      <form class="ai-settings" id="aiSettings" hidden>
+        <label for="aiApiKey">OpenAI API-ключ</label>
+        <div><input id="aiApiKey" type="password" autocomplete="off" placeholder="sk-…"><button type="submit">Зберегти</button></div>
+        <label for="aiModel">Модель</label>
+        <input id="aiModel" type="text" value="gpt-5.4-mini" autocomplete="off">
+        <section class="ai-knowledge-setup">
+          <div class="ai-knowledge-title"><b>Посібник «Управлінський облік»</b><span id="aiKnowledgeStatus">Не підключено</span></div>
+          <p>Завантажте PDF за посиланням, а потім виберіть його тут. Помічник використовуватиме посібник як професійне джерело.</p>
+          <div class="ai-knowledge-actions">
+            <a href="https://elibrary.donnuet.edu.ua/1407/1/Shevchenko_manual_Upravlinsiy_oblik_2017.pdf" target="_blank" rel="noopener">Завантажити PDF</a>
+            <button id="aiKnowledgeConnect" type="button">Підключити PDF</button>
+          </div>
+          <input id="aiKnowledgeFile" type="file" accept="application/pdf,.pdf" hidden>
+        </section>
+        <p>Ключ постійно зберігається лише на цьому пристрої та надсилається тільки до OpenAI. Введіть новий ключ, щоб замінити збережений. У Firebase і бекапи ключ не потрапляє.</p>
+        <button class="ai-key-clear" id="aiKeyClear" type="button">Видалити ключ</button>
+      </form>
+      <div class="ai-messages" id="aiMessages" role="log" aria-live="polite" aria-relevant="additions">
+        <div class="ai-message assistant"><span class="ai-message-avatar" aria-hidden="true">AI</span><div><p>Вітаю! Додайте OpenAI API-ключ у налаштуваннях ⚙, і я проаналізую дані та код системи, а також підкажу точні кнопки й кроки.</p><time>Зараз</time></div></div>
+      </div>
+      <div class="ai-suggestions" id="aiSuggestions" aria-label="Швидкі запитання">
+        <button type="button">Який поточний баланс?</button><button type="button">Покажи доходи та витрати</button><button type="button">Скільки чистого прибутку?</button>
+      </div>
+      <form class="ai-composer" id="aiChatForm">
+        <label for="aiChatInput" class="sr-only">Повідомлення помічнику</label>
+        <textarea id="aiChatInput" rows="1" maxlength="600" placeholder="Напишіть повідомлення…" required></textarea>
+        <button type="submit" aria-label="Надіслати повідомлення"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 17 8-17 8 3-8-3-8Zm3.5 2.8L9.4 11H17L7.5 6.8ZM9.4 13l-1.9 4.2L17 13H9.4Z" fill="currentColor"/></svg></button>
+      </form>
+    </section>
+    <button class="ai-launcher" id="aiLauncher" type="button" aria-label="Відкрити ШІ помічника" aria-expanded="false" aria-controls="aiChat">
+      <svg class="ai-spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.7 4.7 2.7 6.7 7.5 7.5C14.7 10.3 12.7 12.3 12 17c-.7-4.7-2.7-6.7-7.5-7.5C9.3 8.7 11.3 6.7 12 2Zm7 13c.3 2.2 1.3 3.2 3.5 3.5-2.2.3-3.2 1.3-3.5 3.5-.3-2.2-1.3-3.2-3.5-3.5 2.2-.3 3.2-1.3 3.5-3.5Z" fill="currentColor"/></svg>
+      <svg class="ai-launcher-close" aria-hidden="true"><use href="#i-x"/></svg>
+      <span>ШІ помічник</span>
+    </button>
+  </aside>
+
+  <div class="modal-backdrop period-modal" id="periodModal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="periodModalTitle">
+      <div class="modal-head"><div><h2 id="periodModalTitle">Закриття періоду</h2><p id="periodStepLabel">Крок 1 із 4</p></div><button class="modal-close" id="closePeriodModal" type="button" aria-label="Закрити"><svg><use href="#i-x"/></svg></button></div>
+      <div class="period-wizard-body" id="periodWizardBody"></div>
+      <div class="modal-footer"><button class="btn secondary" id="periodBack" type="button">Назад</button><button class="btn primary" id="periodNext" type="button">Далі</button></div>
+    </section>
+  </div>
+  <div class="modal-backdrop period-modal" id="snapshotModal" aria-hidden="true">
+    <section class="modal snapshot-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>Знімок закритого періоду</h2><p id="snapshotSubtitle"></p></div><button class="modal-close" id="closeSnapshotModal" type="button" aria-label="Закрити"><svg><use href="#i-x"/></svg></button></div><div class="period-wizard-body" id="snapshotBody"></div><div class="modal-footer"><button class="btn secondary" id="snapshotCsv" type="button">Експорт CSV</button><button class="btn primary" id="snapshotPrint" type="button">Друк / PDF</button></div></section>
+  </div>
+  <div class="modal-backdrop" id="distributionModal" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="distributionModalTitle"><div class="modal-head"><div><h2 id="distributionModalTitle">Розподілити прибуток</h2><p id="distributionStepLabel">Крок 1 із 4</p></div><button class="modal-close" id="closeDistributionModal" type="button" aria-label="Закрити"><svg><use href="#i-x"/></svg></button></div><div class="period-wizard-body" id="distributionWizardBody"></div><div class="modal-footer"><button class="btn secondary" id="distributionBack" type="button">Назад</button><button class="btn secondary" id="distributionSaveDraft" type="button">Зберегти чернетку</button><button class="btn primary" id="distributionNext" type="button">Далі</button></div></section></div>
+  <div class="modal-backdrop" id="reservePayoutModal" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="reservePayoutTitle"><div class="modal-head"><div><h2 id="reservePayoutTitle">Виплатити з резерву</h2><p>Внутрішній переказ без впливу на прибуток</p></div><button class="modal-close" id="closeReservePayout" type="button" aria-label="Закрити"><svg><use href="#i-x"/></svg></button></div><form id="reservePayoutForm"><div class="form-body"><div class="form-grid"><label class="field"><span>Рахунок-одержувач</span><select name="account" required><option>ФОП моно</option><option>ФОП новапей</option><option>Біла карта</option></select></label><label class="field"><span>Сума</span><input name="amount" type="number" min="0.01" step="0.01" required></label><label class="field"><span>Дата</span><input name="date" type="date" required></label><label class="field"><span>Партія товару</span><input name="batchId" placeholder="Необов’язково"></label></div><label class="field"><span>Мета / коментар</span><textarea name="comment" required></textarea></label><div class="form-error" id="reservePayoutError" hidden></div></div><div class="modal-footer"><button class="btn secondary" id="cancelReservePayout" type="button">Скасувати</button><button class="btn primary" type="submit">Переказати</button></div></form></section></div>
+
+  <div class="toast" id="toast">Транзакцію додано</div>
+
+  <div class="modal-backdrop" id="transactionModal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div class="modal-title-group"><span class="modal-title-icon"><svg><use href="#i-arrow-down"/></svg></span><div><h2 id="modalTitle">Нова транзакція</h2><p>Внесіть дані про рух коштів</p></div></div>
+        <button class="modal-close" id="closeModal" type="button" aria-label="Закрити"><svg><use href="#i-x"/></svg></button>
+      </div>
+      <form id="transactionForm">
+        <div class="form-body">
+          <div class="form-row date-row">
+            <label class="field"><span>Дата <b>*</b></span><input id="transactionDate" type="date" required></label>
+            <label class="field"><span>Час <b>*</b></span><input id="transactionTime" type="time" required></label>
+          </div>
+          <label class="field amount-field"><span>Сума <b>*</b></span><div class="money-input"><span class="currency-symbol">₴</span><input id="transactionAmount" type="number" min="0.01" step="0.01" placeholder="0,00" required><strong>UAH</strong></div></label>
+          <fieldset class="type-field"><legend>Тип транзакції <b>*</b></legend><div class="type-options">
+            <label><input type="radio" name="transactionType" value="income" checked><span class="type-option income"><i><svg><use href="#i-arrow-down"/></svg></i><em>Надходження</em></span></label>
+            <label><input type="radio" name="transactionType" value="expense"><span class="type-option expense"><i><svg><use href="#i-arrow-up"/></svg></i><em>Витрата</em></span></label>
+            <label><input type="radio" name="transactionType" value="refund"><span class="type-option refund"><i><svg><use href="#i-return"/></svg></i><em>Повернення</em></span></label>
+            <label><input type="radio" name="transactionType" value="transfer"><span class="type-option transfer"><i><svg><use href="#i-transfer"/></svg></i><em>Переказ</em></span></label>
+            <label><input type="radio" name="transactionType" value="payout"><span class="type-option payout"><i><svg><use href="#i-wallet"/></svg></i><em>Виплата прибутку</em></span></label>
+            <label><input type="radio" name="transactionType" value="contribution"><span class="type-option contribution"><i><svg><use href="#i-plus"/></svg></i><em>Внесок партнера</em></span></label>
+            <label><input type="radio" name="transactionType" value="contribution_return"><span class="type-option contribution-return"><i><svg><use href="#i-return"/></svg></i><em>Повернення внеску</em></span></label>
+          </div></fieldset>
+          <label class="field" id="refundDirectionField" hidden><span>Напрямок повернення <b>*</b></span><select id="refundDirection"><option value="refund_out">Клієнту</option><option value="refund_in">Від постачальника / магазину</option></select></label>
+          <label class="field" id="refundOriginalField" hidden><span>Повернення до операції (рекомендовано)</span><select id="refundOriginal"><option value="">Без прив’язки</option></select><small id="legacyRefundNote" hidden>Старі повернення мігровано як повернення від постачальника. Якщо це було повернення клієнту — змініть тип через редагування.</small></label>
+          <label class="field" id="categoryField"><span>Категорія (стаття) <b>*</b></span><select id="transactionCategory" required><option value="" disabled selected>Оберіть категорію</option><option>Замовлення</option><option>Закупка</option><option>Повернення грошей за товар (закупка)</option><option>Податки</option><option>Бухгалтерські послуги</option><option>Доставка міжнародна</option><option>Доставка локальна</option><option>CRM</option><option>Чекбокс</option><option>ШІ продукти</option></select></label>
+          <label class="field" id="partnerField" hidden><span>Партнер (Власник / Інвестор) <b>*</b></span><select id="transactionPartner"><option value="" disabled selected>Оберіть партнера</option><option value="Руслан">Руслан — Власник</option><option value="Денис">Денис — Власник</option></select></label>
+          <label class="field" id="contributionKindField" hidden><span>Вид внеску <b>*</b></span><select id="contributionKind"><option value="" disabled selected>Оберіть вид</option><option value="capital">Внесок у капітал</option><option value="loan">Позика від партнера</option></select></label>
+          <label class="field" id="singleAccountField"><span>Рахунок <b>*</b></span><select id="transactionAccount" required><option value="" disabled selected>Оберіть рахунок</option><option>ФОП моно</option><option>ФОП новапей</option><option>Біла карта</option><option>Резервний фонд</option></select><span class="available-balance" id="accountBalanceHint">Оберіть рахунок, щоб побачити баланс</span></label>
+          <div class="form-row transfer-accounts" id="transferAccounts" hidden>
+            <label class="field"><span>З рахунку <b>*</b></span><select id="transferFrom"><option value="" disabled selected>Оберіть рахунок</option><option>ФОП моно</option><option>ФОП новапей</option><option>Біла карта</option><option>Резервний фонд</option></select><span class="available-balance" id="transferBalanceHint">Оберіть рахунок, щоб побачити баланс</span></label>
+            <label class="field"><span>На рахунок <b>*</b></span><select id="transferTo"><option value="" disabled selected>Оберіть рахунок</option><option>ФОП моно</option><option>ФОП новапей</option><option>Біла карта</option><option>Резервний фонд</option></select></label>
+          </div>
+          <label class="field"><span>Коментар</span><textarea id="transactionComment" rows="3" maxlength="300" placeholder="Додайте деталі до транзакції..."></textarea><small><span id="commentCount">0</span>/300</small></label>
+          <div class="form-error" id="transactionError" role="alert" hidden></div>
+        </div>
+        <div class="modal-footer"><div class="operation-total"><span>Підсумок операції</span><b id="operationTotal">+ ₴ 0,00</b></div><div class="modal-footer-actions"><button class="btn secondary" id="cancelModal" type="button">Скасувати</button><button class="btn primary" type="submit"><svg><use href="#i-plus"/></svg>Додати транзакцію</button></div></div>
+      </form>
+    </section>
+  </div>
+
+  <svg class="svg-sprite" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m-4 4 4-4 4 4M4 15v5h16v-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 6h16v14H3zM3 8V4h13v2m1 7h4v4h-4a2 2 0 0 1 0-4Z"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 4v16m-6-6 6 6 6-6"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 20V4m-6 6 6-6 6 6"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8m-5 0h5v5"/></symbol>
+    <symbol id="i-trend-down" viewBox="0 0 24 24"><path d="m3 7 6 6 4-4 8 8m-5 0h5v-5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m5 7H2"/></symbol>
+    <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M9 4v16"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4m8-4v4M3 10h18"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10m-7 6h4"/></symbol>
+    <symbol id="i-columns" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M9 4v16m6-16v16"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12m-5-5 5 5 5-5M4 20h16"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-return" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M5 12h9a5 5 0 0 1 5 5v2"/></symbol>
+    <symbol id="i-transfer" viewBox="0 0 24 24"><path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4 4-4-4 4-4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Zm9-13 4 4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  </svg>
+  <script src="firebase-config.js"></script>
+  <script src="firebase-service.js"></script>
+  <script src="accounting-core.js"></script>
+  <script src="planned-payments-core.js"></script>
+  <script src="period-core.js"></script>
+  <script src="distribution-core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

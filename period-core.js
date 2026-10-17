@@ -1,0 +1,19 @@
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.FinbasePeriods=api})(typeof globalThis!=='undefined'?globalThis:this,function(){
+  const round=value=>Math.round((Number(value)||0)*100)/100||0;
+  const active=list=>(list||[]).filter(tx=>!tx.isDeleted);
+  const inRange=(tx,start,end)=>tx.isoDate&&tx.isoDate>=start&&tx.isoDate<=end;
+  function createPeriodTools({transactions=[],accounts=[],owners=[],signedAmount}){
+    const signed=tx=>round(signedAmount(tx));
+    const getBalanceAt=(account,isoDate)=>round(active(transactions).filter(tx=>tx.account===account&&tx.isoDate<=isoDate).reduce((sum,tx)=>sum+signed(tx),0));
+    const getMinBalanceInRange=(account,start,end)=>{let balance=round(active(transactions).filter(tx=>tx.account===account&&tx.isoDate<start).reduce((s,tx)=>s+signed(tx),0)),minimum=balance,date=start;const byDay={};active(transactions).filter(tx=>tx.account===account&&inRange(tx,start,end)).forEach(tx=>byDay[tx.isoDate]=round((byDay[tx.isoDate]||0)+signed(tx)));for(const day of Object.keys(byDay).sort()){balance=round(balance+byDay[day]);if(balance<minimum){minimum=balance;date=day}}return{balance:minimum,date}};
+    const computePeriodReport=(start,end)=>{const rows=active(transactions).filter(tx=>inRange(tx,start,end)&&!tx.transferId&&!tx.isTransfer);let income=0,expenses=0,payouts=0;for(const tx of rows){if(tx.type==='income')income+=Math.abs(signed(tx));if(tx.type==='refund_out')income-=Math.abs(signed(tx));if(tx.type==='expense')expenses+=Math.abs(signed(tx));if(tx.type==='refund_in')expenses-=Math.abs(signed(tx));if(tx.type==='payout')payouts+=Math.abs(signed(tx))}income=round(income);expenses=round(expenses);return{income,expenses,operatingProfit:round(income-expenses),payouts:round(payouts)}};
+    const computeCumulativeUndistributed=end=>{const first=active(transactions).map(tx=>tx.isoDate).filter(Boolean).sort()[0]||end,report=computePeriodReport(first,end);return round(report.operatingProfit-report.payouts)};
+    const computePartnerPositions=end=>Object.fromEntries(owners.map(owner=>{const rows=active(transactions).filter(tx=>tx.party===owner&&tx.isoDate<=end);const capital=rows.reduce((s,tx)=>s+(tx.type==='contribution'&&tx.contributionKind==='capital'?Math.abs(signed(tx)):tx.type==='contribution_return'&&tx.contributionKind==='capital'?-Math.abs(signed(tx)):0),0),loanDebt=rows.reduce((s,tx)=>s+(tx.type==='contribution'&&tx.contributionKind==='loan'?Math.abs(signed(tx)):tx.type==='contribution_return'&&tx.contributionKind==='loan'?-Math.abs(signed(tx)):0),0);return[owner,{capital:round(capital),loanDebt:round(loanDebt)}]}));
+    const findBrokenTransfers=()=>{const groups={};active(transactions).filter(tx=>tx.transferId).forEach(tx=>(groups[tx.transferId]??=[]).push(tx));return Object.entries(groups).filter(([,rows])=>rows.length!==2||round(Math.abs(signed(rows[0]))||0)!==round(Math.abs(signed(rows[1]))||0)).map(([transferId,rows])=>({transferId,rows}))};
+    const checksum=(start,end)=>round(active(transactions).filter(tx=>inRange(tx,start,end)).reduce((s,tx)=>s+signed(tx),0));
+    return{getBalanceAt,getMinBalanceInRange,computePeriodReport,computeCumulativeUndistributed,computePartnerPositions,findBrokenTransfers,checksum,activeTransactions:()=>active(transactions)};
+  }
+  const findClosedPeriodForDate=(periods,date)=>(periods||[]).find(p=>(p.status||(!p.reopenedAt?'closed':'reopened'))==='closed'&&date>=(p.start||p.from)&&date<=(p.end||p.to))||null;
+  const migratePeriods=periods=>(periods||[]).map((p,index)=>{if('start'in p&&'end'in p&&'status'in p&&p.id)return p;const start=p.start||p.from,end=p.end||p.to;return{...p,id:p.id||`legacy-${index}-${start}-${end}`,start,end,closedBy:p.closedBy||p.by||'',status:p.status||(p.reopenedAt?'reopened':'closed'),snapshot:p.snapshot||null,legacy:p.legacy??!p.snapshot}});
+  return{round,createPeriodTools,findClosedPeriodForDate,migratePeriods};
+});

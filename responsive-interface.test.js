@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const css=fs.readFileSync('styles.css','utf8'),js=fs.readFileSync('app.js','utf8');
+assert.match(css,/html,body\{max-width:100%;overflow-x:hidden\}/,'сторінка не прокручується вбік');
+assert.match(css,/grid-template-rows:auto minmax\(0,1fr\) auto/,'єдиний каркас модальних вікон');
+assert.match(css,/\.form-body,\.period-wizard-body[^}]*overflow-x:hidden/s,'тіла модалок без горизонтального скролу');
+assert.match(css,/#closedPeriodRows table[^}]*display:block/s,'періоди переходять у картки');
+assert.match(css,/\.reconcile-table thead\{display:none!important\}/,'звірка переходить у картки');
+assert.match(css,/\.migration-panel:empty\{display:none!important\}/,'порожній банер прихований');
+assert.match(css,/--tap:2\.75rem/,'мобільна зона натискання 44px');
+assert.match(js,/function positionTooltip/,'портал підказки перераховує позицію');
+assert.match(js,/addEventListener\('resize',positionTooltip\)/,'позиція оновлюється при resize');
+assert.match(js,/MutationObserver\(sync\)/,'aria стан модалок синхронізується');
+console.log('responsive-interface: 10 перевірок пройдено');
